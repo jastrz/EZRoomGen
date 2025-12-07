@@ -7,6 +7,7 @@ EZRoomGen lets you generate and edit rooms, dungeons, and mazes using an interac
 ## Features
 
 - **Three Grid Layout Generators:**
+
   - **Room-Corridor** – Connected room layouts with corridors
   - **Dungeon** – Cave-like structures using Cellular Automata
   - **Maze** – Classic maze generation using Recursive Backtracking
@@ -15,14 +16,11 @@ EZRoomGen lets you generate and edit rooms, dungeons, and mazes using an interac
 
 ## Samples
 
-Dungeon
-![Dungeon](https://i.imgur.com/y70jZhA.gif)
+![Dungeon](https://i.imgur.com/y70jZhA.gif) Dungeon
 
-Rooms and Corridors
-![Rooms and Corridors](https://i.imgur.com/RuKg3AB.gif)
+![Rooms and Corridors](https://i.imgur.com/RuKg3AB.gif) Rooms and Corridors
 
-First Person View
-![FPP](https://imgur.com/tD8SwYV.png)
+![FPP](https://imgur.com/tD8SwYV.png) Custom Room
 
 ## Installation
 
@@ -38,10 +36,11 @@ To enable FBX export functionality:
 
 ## Notes
 
-- Generates Wall, Floor and Roof as separate meshes. 
+- Generates Wall, Floor and Roof as separate meshes.
+- Works with all pipelines, although sample materials are for URP, so some adjustments might be needed for them to work.
 - Contains simple FPP Controller (Player prefab) with a flashlight, of course.
 - Standalone PlayMode support has not been tested yet.
 
 ---
 
-*Generate procedural dungeons with ease—no complex setup required.*
+_Generate procedural dungeons with ease—no complex setup required._
