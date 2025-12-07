@@ -15,10 +15,8 @@ namespace EZRoomGen.Generation.Editor
     /// </summary>
     public class RoomCorridorLayoutGeneratorEditor : IGeneratorEditor<RoomCorridorLayoutGeneratorSettings>
     {
-        public bool DrawInspector(RoomCorridorLayoutGeneratorSettings settingsObj)
+        public bool DrawInspector(RoomCorridorLayoutGeneratorSettings settings)
         {
-            var settings = (RoomCorridorLayoutGeneratorSettings)settingsObj;
-
             EditorGUI.BeginChangeCheck();
 
             EditorGUILayout.Space();

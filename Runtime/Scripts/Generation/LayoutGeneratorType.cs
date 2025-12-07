@@ -3,6 +3,7 @@ namespace EZRoomGen.Generation
     public enum LayoutGeneratorType
     {
         RoomCorridor,
-        Dungeon
+        Dungeon,
+        Maze
     }
 }

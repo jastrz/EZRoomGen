@@ -40,8 +40,10 @@ namespace EZRoomGen.Core.Editor
 
         private RoomCorridorLayoutGeneratorEditor roomCorridorGeneratorEditor = new();
         private DungeonLayoutGeneratorEditor dungeonLayoutGeneratorEditor = new();
+        private MazeLayoutGeneratorEditor mazeLayoutGeneratorEditor = new();
         private RoomCorridorLayoutGeneratorSettings roomCorridorGeneratorSettings = new();
         private DungeonLayoutGeneratorSettings dungeonLayoutGeneratorSettings = new();
+        private MazeLayoutLayoutGeneratorSettings mazeLayoutLayoutGeneratorSettings = new();
         private ILayoutGenerator layoutGenerator;
         private RoomGenerator generator;
 
@@ -194,8 +196,8 @@ namespace EZRoomGen.Core.Editor
 
             EditorGUILayout.PropertyField(automaticallyAddLightsProp);
             EditorGUILayout.PropertyField(lampPrefabProp);
-            EditorGUILayout.Slider(roomSpacingProp, 1f, 10f, new GUIContent("Room Spacing"));
-            EditorGUILayout.Slider(corridorSpacingProp, 1f, 10f, new GUIContent("Corridor Spacing"));
+            EditorGUILayout.Slider(roomSpacingProp, 2f, 10f, new GUIContent("Room Spacing"));
+            EditorGUILayout.Slider(corridorSpacingProp, 2f, 10f, new GUIContent("Corridor Spacing"));
 
             bool changed = EditorGUI.EndChangeCheck();
             return changed;
@@ -260,13 +262,18 @@ namespace EZRoomGen.Core.Editor
                 shouldGenerate = roomCorridorGeneratorEditor.DrawInspector(roomCorridorGeneratorSettings);
                 roomCorridorGeneratorSettings.height = defaultHeightProp.floatValue;
                 layoutGenerator = new RoomCorridorLayoutGenerator(roomCorridorGeneratorSettings);
-
             }
             else if (type == LayoutGeneratorType.Dungeon)
             {
                 shouldGenerate = dungeonLayoutGeneratorEditor.DrawInspector(dungeonLayoutGeneratorSettings);
                 dungeonLayoutGeneratorSettings.height = defaultHeightProp.floatValue;
                 layoutGenerator = new DungeonLayoutGenerator(dungeonLayoutGeneratorSettings);
+            }
+            else if (type == LayoutGeneratorType.Maze)
+            {
+                shouldGenerate = mazeLayoutGeneratorEditor.DrawInspector(mazeLayoutLayoutGeneratorSettings);
+                mazeLayoutLayoutGeneratorSettings.height = defaultHeightProp.floatValue;
+                layoutGenerator = new MazeLayoutGenerator(mazeLayoutLayoutGeneratorSettings);
             }
 
             if (realtimeGenerationProp.boolValue)
@@ -312,6 +319,7 @@ namespace EZRoomGen.Core.Editor
                 EditorGUI.BeginChangeCheck();
                 float currentHeight = generator.GetCellHeight(selectedX, selectedY);
                 float newHeight = EditorGUILayout.Slider("Cell Height", currentHeight, 0f, 5f);
+
                 if (EditorGUI.EndChangeCheck())
                 {
                     generator.SetCellHeight(selectedX, selectedY, newHeight);
@@ -354,118 +362,195 @@ namespace EZRoomGen.Core.Editor
         /// </summary>
         private void DrawGrid(RoomGenerator generator)
         {
-            int gridWidth = (int)typeof(RoomGenerator).GetField("gridWidth",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(generator);
-            int gridHeight = (int)typeof(RoomGenerator).GetField("gridHeight",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(generator);
-
-            var selectedXField = typeof(RoomGenerator).GetField("selectedX",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            var selectedYField = typeof(RoomGenerator).GetField("selectedY",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-
-            int selectedX = (int)selectedXField.GetValue(generator);
-            int selectedY = (int)selectedYField.GetValue(generator);
+            var gridDimensions = GetGridDimensions(generator);
+            var selectedCell = GetSelectedCell(generator);
 
             Rect gridRect = GUILayoutUtility.GetRect(
-                cellSize * gridWidth + gridPadding * 2,
-                cellSize * gridHeight + gridPadding * 2
+                cellSize * gridDimensions.width + gridPadding * 2,
+                cellSize * gridDimensions.height + gridPadding * 2
             );
 
             Event e = Event.current;
 
-            for (int y = 0; y < gridHeight; y++)
+            // Draw each cell in the grid
+            for (int y = 0; y < gridDimensions.height; y++)
             {
-                for (int x = 0; x < gridWidth; x++)
+                for (int x = 0; x < gridDimensions.width; x++)
                 {
-                    Rect cellRect = new Rect(
-                        gridRect.x + gridPadding + x * cellSize,
-                        gridRect.y + gridPadding + (gridHeight - 1 - y) * cellSize,
-                        cellSize - 2,
-                        cellSize - 2
-                    );
+                    Rect cellRect = CalculateCellRect(gridRect, x, y, gridDimensions.height);
 
-                    bool isHovering = cellRect.Contains(e.mousePosition);
-
-                    // Left mouse: paint
-                    if (isHovering && e.type == EventType.MouseDown && e.button == 0)
-                    {
-                        isDragging = true;
-                        generator.ToggleCell(x, y);
-                        if (realtimeGenerationProp.boolValue) generator.GenerateRoom();
-                        e.Use();
-                        Repaint();
-                    }
-                    // Right mouse: select
-                    else if (isHovering && e.type == EventType.MouseDown && e.button == 1)
-                    {
-                        selectedXField.SetValue(generator, x);
-                        selectedYField.SetValue(generator, y);
-                        e.Use();
-                        Repaint();
-                    }
-                    // Left mouse drag: paint
-                    else if (isHovering && e.type == EventType.MouseDrag && isDragging && e.button == 0)
-                    {
-                        if (generator.GetCellHeight(x, y) <= 0)
-                        {
-                            generator.SetCellHeight(x, y, defaultHeightProp.floatValue);
-                            if (realtimeGenerationProp.boolValue) generator.GenerateRoom();
-                            Repaint();
-                        }
-                        e.Use();
-                    }
-                    // MIDDLE mouse down or drag: ERASE
-                    else if (isHovering &&
-                        ((e.type == EventType.MouseDown && e.button == 2) ||
-                         (e.type == EventType.MouseDrag && e.button == 2)))
-                    {
-                        if (generator.GetCellHeight(x, y) > 0)
-                        {
-                            generator.SetCellHeight(x, y, 0f);  // Set inactive
-                            if (realtimeGenerationProp.boolValue) generator.GenerateRoom();
-                            Repaint();
-                        }
-                        e.Use();
-                    }
+                    HandleCellInput(generator, x, y, cellRect, e, ref selectedCell);
 
                     bool isActive = generator.GetCellHeight(x, y) > 0;
-                    bool isSelected = (x == selectedX && y == selectedY);
+                    bool isSelected = (x == selectedCell.x && y == selectedCell.y);
 
-                    Color cellColor;
-
-                    if (isSelected && isActive)
-                        cellColor = new Color(1f, 0.8f, 0.2f);
-                    else if (isSelected)
-                        cellColor = new Color(0.8f, 0.5f, 0.1f);
-                    else if (isActive)
-                    {
-                        float heightRatio = generator.GetCellHeight(x, y) / 5f;
-                        cellColor = Color.Lerp(new Color(0.2f, 0.4f, 1f), new Color(0.2f, 1f, 0.4f), heightRatio);
-                    }
-                    else
-                        cellColor = new Color(0.2f, 0.2f, 0.2f);
-
-                    EditorGUI.DrawRect(cellRect, cellColor);
-                    Handles.DrawSolidRectangleWithOutline(cellRect, Color.clear, new Color(0.3f, 0.3f, 0.3f));
-
-                    if (isActive)
-                    {
-                        GUIStyle style = new GUIStyle(GUI.skin.label);
-                        style.alignment = TextAnchor.MiddleCenter;
-                        style.normal.textColor = Color.white;
-                        style.fontSize = 10;
-                        GUI.Label(cellRect, generator.GetCellHeight(x, y).ToString("F1"), style);
-                    }
+                    DrawCell(generator, cellRect, x, y, isActive, isSelected);
                 }
             }
 
+            // Reset dragging state when mouse button is released
             if (e.type == EventType.MouseUp && e.button == 0)
             {
                 isDragging = false;
             }
 
             EditorGUILayout.HelpBox("Left-click and drag to paint cells. Right-click to select cell. Middle-click and drag to erase cells.", MessageType.Info);
+        }
+
+        /// <summary>
+        /// Retrieves the grid dimensions from the RoomGenerator .
+        /// </summary>
+        private (int width, int height) GetGridDimensions(RoomGenerator generator)
+        {
+            int width = (int)typeof(RoomGenerator).GetField("gridWidth",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(generator);
+            int height = (int)typeof(RoomGenerator).GetField("gridHeight",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(generator);
+
+            return (width, height);
+        }
+
+        /// <summary>
+        /// Retrieves the currently selected cell coordinates from the RoomGenerator.
+        /// </summary>
+        private (int x, int y) GetSelectedCell(RoomGenerator generator)
+        {
+            var selectedXField = typeof(RoomGenerator).GetField("selectedX",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var selectedYField = typeof(RoomGenerator).GetField("selectedY",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+            int x = (int)selectedXField.GetValue(generator);
+            int y = (int)selectedYField.GetValue(generator);
+
+            return (x, y);
+        }
+
+        /// <summary>
+        /// Sets the selected cell coordinates in the RoomGenerator using reflection.
+        /// </summary>
+        private void SetSelectedCell(RoomGenerator generator, int x, int y)
+        {
+            var selectedXField = typeof(RoomGenerator).GetField("selectedX",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var selectedYField = typeof(RoomGenerator).GetField("selectedY",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+            selectedXField.SetValue(generator, x);
+            selectedYField.SetValue(generator, y);
+        }
+
+        /// <summary>
+        /// Calculates the screen-space rectangle for a grid cell.
+        /// Y-axis is inverted so that (0,0) is at the bottom-left.
+        /// </summary>
+        private Rect CalculateCellRect(Rect gridRect, int x, int y, int gridHeight)
+        {
+            return new Rect(
+                gridRect.x + gridPadding + x * cellSize,
+                gridRect.y + gridPadding + (gridHeight - 1 - y) * cellSize,
+                cellSize - 2,
+                cellSize - 2
+            );
+        }
+
+        /// <summary>
+        /// Handles mouse input for a cell: painting, selecting, and erasing.
+        /// - Left click/drag: Toggle or paint cells
+        /// - Right click: Select cell
+        /// - Middle click/drag: Erase cells
+        /// </summary>
+        private void HandleCellInput(RoomGenerator generator, int x, int y, Rect cellRect, Event e, ref (int x, int y) selectedCell)
+        {
+            bool isHovering = cellRect.Contains(e.mousePosition);
+            if (!isHovering) return;
+
+            // Left mouse: paint (toggle cell on initial click)
+            if (e.type == EventType.MouseDown && e.button == 0)
+            {
+                isDragging = true;
+                generator.ToggleCell(x, y);
+                if (realtimeGenerationProp.boolValue) generator.GenerateRoom();
+                e.Use();
+                Repaint();
+            }
+            // Right mouse: select cell for editing
+            else if (e.type == EventType.MouseDown && e.button == 1)
+            {
+                SetSelectedCell(generator, x, y);
+                selectedCell = (x, y);
+                e.Use();
+                Repaint();
+            }
+            // Left mouse drag: paint only inactive cells
+            else if (e.type == EventType.MouseDrag && isDragging && e.button == 0)
+            {
+                if (generator.GetCellHeight(x, y) <= 0)
+                {
+                    generator.SetCellHeight(x, y, defaultHeightProp.floatValue);
+                    if (realtimeGenerationProp.boolValue) generator.GenerateRoom();
+                    Repaint();
+                }
+                e.Use();
+            }
+            // Middle mouse: erase cells (set height to 0)
+            else if ((e.type == EventType.MouseDown && e.button == 2) ||
+                     (e.type == EventType.MouseDrag && e.button == 2))
+            {
+                if (generator.GetCellHeight(x, y) > 0)
+                {
+                    generator.SetCellHeight(x, y, 0f);
+                    if (realtimeGenerationProp.boolValue) generator.GenerateRoom();
+                    Repaint();
+                }
+                e.Use();
+            }
+        }
+
+        /// <summary>
+        /// Renders a single grid cell with its color, outline, and height label.
+        /// </summary>
+        private void DrawCell(RoomGenerator generator, Rect cellRect, int x, int y, bool isActive, bool isSelected)
+        {
+            Color cellColor = GetCellColor(generator, x, y, isActive, isSelected);
+
+            // Draw cell background and outline
+            EditorGUI.DrawRect(cellRect, cellColor);
+            Handles.DrawSolidRectangleWithOutline(cellRect, Color.clear, new Color(0.3f, 0.3f, 0.3f));
+
+            // Draw height value label on active cells
+            if (isActive)
+            {
+                GUIStyle style = new GUIStyle(GUI.skin.label)
+                {
+                    alignment = TextAnchor.MiddleCenter,
+                    fontSize = 10
+                };
+                style.normal.textColor = Color.white;
+
+                GUI.Label(cellRect, generator.GetCellHeight(x, y).ToString("F1"), style);
+            }
+        }
+
+        /// <summary>
+        /// Determines the color of a cell based on its state.
+        /// </summary>
+        private Color GetCellColor(RoomGenerator generator, int x, int y, bool isActive, bool isSelected)
+        {
+            if (isSelected && isActive)
+                return new Color(1f, 0.8f, 0.2f); // Bright orange
+
+            if (isSelected)
+                return new Color(0.8f, 0.5f, 0.1f); // Dark orange
+
+            if (isActive)
+            {
+                // Gradient from blue (low height) to green (high height)
+                float heightRatio = generator.GetCellHeight(x, y) / 5f;
+                return Color.Lerp(new Color(0.2f, 0.4f, 1f), new Color(0.2f, 1f, 0.4f), heightRatio);
+            }
+
+            return new Color(0.2f, 0.2f, 0.2f); // Dark gray (inactive)
         }
     }
 }
