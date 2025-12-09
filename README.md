@@ -1,6 +1,6 @@
 # EZRoomGen
 
-**Editor-friendly, Lightweight Grid-Based Procedural Room & Dungeon Generator for Unity**
+**Editor-friendly, Lightweight, Grid-Based Procedural Room & Dungeon Generator for Unity**
 
 EZRoomGen lets you generate and edit rooms, dungeons, and mazes using an interactive grid. It automatically generates floor, wall, and roof meshes, adds colliders, and places lights.
 
@@ -16,17 +16,30 @@ EZRoomGen lets you generate and edit rooms, dungeons, and mazes using an interac
 
 ## Samples
 
-Dungeon
+Inspector and example dungeon room
+
+![Inspector](https://i.imgur.com/hduqY4f.gif)
+
+Editable grid (max size 100x100)
+
+![Grid](https://i.imgur.com/Gq8K7Rg.gif)
+
+Dungeon (40x40)
 
 ![Dungeon](https://i.imgur.com/y70jZhA.gif)
 
-Rooms and Corridors
+Rooms and Corridors (40x40)
 
 ![Rooms and Corridors](https://i.imgur.com/RuKg3AB.gif)
+
+Rooms and Corridors (80x80)
+
+![Rooms and Corridors](https://i.imgur.com/XfuVDhb.gif)
 
 Custom Room
 
 ![FPP](https://imgur.com/tD8SwYV.png)
+
 
 ## Installation
 
