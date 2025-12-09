@@ -164,10 +164,6 @@ namespace EZRoomGen.Core.Editor
                     }
                 }
             }
-            else
-            {
-                EditorGUILayout.HelpBox("Right-click on a cell to select it for editing.", MessageType.Info);
-            }
         }
 
         /// <summary>
