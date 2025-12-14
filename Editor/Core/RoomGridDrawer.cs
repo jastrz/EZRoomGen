@@ -32,6 +32,8 @@ namespace EZRoomGen.Core.Editor
             DrawGrid(generator);
 
             EditorGUILayout.Space();
+            DrawDefaultHeightSlider(generator);
+            EditorGUILayout.Space();
             DrawSelectedCellControls(generator);
 
             EditorGUILayout.Space();
@@ -41,6 +43,11 @@ namespace EZRoomGen.Core.Editor
                 "• Middle-click and drag to erase cells\n" +
                 "• Ctrl + Scroll to zoom in/out",
                 MessageType.Info);
+        }
+
+        private void DrawDefaultHeightSlider(RoomGenerator generator)
+        {
+            generator.DefaultHeight = EditorGUILayout.Slider("Drawing Height", generator.DefaultHeight, 1f, 10f);
         }
 
         /// <summary>
@@ -123,17 +130,15 @@ namespace EZRoomGen.Core.Editor
 
                 var realtimeGeneration = GetRealtimeGeneration(generator);
 
-                // Setting height disabled for now
+                EditorGUI.BeginChangeCheck();
+                float currentHeight = generator.GetCellHeight(selectedCell.x, selectedCell.y);
+                float newHeight = EditorGUILayout.Slider("Cell Height", currentHeight, 0f, 10f);
 
-                // EditorGUI.BeginChangeCheck();
-                // float currentHeight = generator.GetCellHeight(selectedCell.x, selectedCell.y);
-                // float newHeight = EditorGUILayout.Slider("Cell Height", currentHeight, 0f, 5f);
-
-                // if (EditorGUI.EndChangeCheck())
-                // {
-                //     generator.SetCellHeight(selectedCell.x, selectedCell.y, newHeight);
-                //     if (realtimeGeneration) generator.GenerateRoom();
-                // }
+                if (EditorGUI.EndChangeCheck())
+                {
+                    generator.SetCellHeight(selectedCell.x, selectedCell.y, newHeight);
+                    if (realtimeGeneration) generator.GenerateRoom();
+                }
 
                 // Wall toggles - only show if cell has height
                 if (generator.GetCellHeight(selectedCell.x, selectedCell.y) > 0)
@@ -167,15 +172,11 @@ namespace EZRoomGen.Core.Editor
         }
 
         /// <summary>
-        /// Retrieves the grid dimensions from the RoomGenerator .
+        /// Retrieves the grid dimensions from the RoomGenerator.
         /// </summary>
         private (int width, int height) GetGridDimensions(RoomGenerator generator)
         {
-            int width = (int)typeof(RoomGenerator).GetField("gridWidth",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(generator);
-            int height = (int)typeof(RoomGenerator).GetField("gridHeight",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(generator);
-            return (width, height);
+            return (generator.GridWidth, generator.GridHeight);
         }
 
         /// <summary>
@@ -183,40 +184,21 @@ namespace EZRoomGen.Core.Editor
         /// </summary>
         private (int x, int y) GetSelectedCell(RoomGenerator generator)
         {
-            var selectedXField = typeof(RoomGenerator).GetField("selectedX",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            var selectedYField = typeof(RoomGenerator).GetField("selectedY",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-
-            int x = (int)selectedXField.GetValue(generator);
-            int y = (int)selectedYField.GetValue(generator);
-            return (x, y);
+            return (generator.SelectedX, generator.SelectedY);
         }
 
         /// <summary>
-        /// Sets the selected cell coordinates in the RoomGenerator using reflection.
+        /// Sets the selected cell coordinates in the RoomGenerator.
         /// </summary>
         private void SetSelectedCell(RoomGenerator generator, int x, int y)
         {
-            var selectedXField = typeof(RoomGenerator).GetField("selectedX",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            var selectedYField = typeof(RoomGenerator).GetField("selectedY",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-
-            selectedXField.SetValue(generator, x);
-            selectedYField.SetValue(generator, y);
+            generator.SelectedX = x;
+            generator.SelectedY = y;
         }
 
         private bool GetRealtimeGeneration(RoomGenerator generator)
         {
-            return (bool)typeof(RoomGenerator).GetField("realtimeGeneration",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(generator);
-        }
-
-        private float GetDefaultHeight(RoomGenerator generator)
-        {
-            return (float)typeof(RoomGenerator).GetField("defaultHeight",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(generator);
+            return generator.RealtimeGeneration;
         }
 
         /// <summary>
@@ -245,7 +227,7 @@ namespace EZRoomGen.Core.Editor
             if (!isHovering) return;
 
             var realtimeGeneration = GetRealtimeGeneration(generator);
-            var defaultHeight = GetDefaultHeight(generator);
+            var defaultHeight = generator.DefaultHeight;
 
             if (e.type == EventType.MouseDown && e.button == 0)
             {

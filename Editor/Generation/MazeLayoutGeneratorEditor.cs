@@ -8,17 +8,15 @@ namespace EZRoomGen.Generation.Editor
     /// <summary>
     /// Editor utility class used to display Maze Layout Generator settings.
     /// </summary>
-    public class MazeLayoutGeneratorEditor : IGeneratorEditor<MazeLayoutLayoutGeneratorSettings>
+    public class MazeLayoutGeneratorEditor : BaseLayoutGeneratorEditor<MazeLayoutLayoutGeneratorSettings>
     {
-        public bool DrawInspector(MazeLayoutLayoutGeneratorSettings settings)
+        public override bool DrawInspector(MazeLayoutLayoutGeneratorSettings settings)
         {
             EditorGUI.BeginChangeCheck();
 
-            EditorGUILayout.Space();
+            DrawBaseFields(settings);
 
-            settings.seed = EditorGUILayout.IntField(
-                new GUIContent("Seed", "Random seed"),
-                settings.seed);
+            EditorGUILayout.Space();
 
             settings.loopCount = EditorGUILayout.IntSlider(
                 new GUIContent("Loop Count", "Number of extra connections"),

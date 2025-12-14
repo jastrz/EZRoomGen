@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
@@ -23,6 +22,7 @@ namespace EZRoomGen.Core
         [SerializeField] private LightPlaceMode lightPlacementMode = LightPlaceMode.Prefab;
         [SerializeField] private GameObject objectHolder;
         private GridData gridData;
+        private GameObject cachedPrefab;
 
         /// <summary>
         /// Places ceiling lights throughout the grid based on tile type (room vs corridor).
@@ -30,7 +30,7 @@ namespace EZRoomGen.Core
         /// </summary>
         public void AddCeilingLights(GameObject parent, GameObject lampPrefab, GridData gridData, float roomSpacing, float corridorSpacing)
         {
-            EnsureResourcesInitialized(parent);
+            EnsureResourcesInitialized(parent, lampPrefab);
 
             this.gridData = gridData;
 
@@ -102,7 +102,7 @@ namespace EZRoomGen.Core
                 }
                 else
                 {
-                    lightObject = CreatePointLight(parent, newLightIsInRoom[i], newLightPositions[i]);
+                    lightObject = CreatePointLight(newLightIsInRoom[i], newLightPositions[i]);
                 }
 
                 placedLightsObjects.Add(lightObject);
@@ -133,14 +133,21 @@ namespace EZRoomGen.Core
                     GameObject.DestroyImmediate(obj);
                 }
             }
+
             placedLightsObjects.Clear();
         }
 
         /// <summary>
         /// Checks if required resources are available and initializes them if they're not.
         /// </summary>
-        private void EnsureResourcesInitialized(GameObject parent)
+        private void EnsureResourcesInitialized(GameObject parent, GameObject lampPrefab)
         {
+            if (lampPrefab != cachedPrefab)
+            {
+                ClearLights();
+                cachedPrefab = lampPrefab;
+            }
+
             if (placedLightsObjects == null)
             {
                 placedLightsObjects = new List<GameObject>();
@@ -148,15 +155,15 @@ namespace EZRoomGen.Core
 
             if (objectHolder == null)
             {
-                objectHolder = new GameObject("Object Holder");
+                objectHolder = new GameObject(Constants.DefaultObjectHolderName);
                 objectHolder.transform.parent = parent.transform;
                 objectHolder.transform.localPosition = Vector3.zero;
             }
         }
 
-        private GameObject CreatePointLight(GameObject parent, bool inRoom, Vector3 lightPos)
+        private GameObject CreatePointLight(bool inRoom, Vector3 lightPos)
         {
-            GameObject lightObject = new GameObject("CeilingLight");
+            GameObject lightObject = new GameObject(Constants.DefaultNonPrefabLightName);
             lightObject.transform.parent = objectHolder.transform;
             lightObject.transform.position = lightPos;
 

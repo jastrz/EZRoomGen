@@ -5,23 +5,19 @@ using UnityEngine;
 
 namespace EZRoomGen.Generation.Editor
 {
-    public interface IGeneratorEditor<T>
-    {
-        bool DrawInspector(T settings);
-    }
-
     /// <summary>
     /// Editor utility class used to display Room Corridor layout generator settings.
     /// </summary>
-    public class RoomCorridorLayoutGeneratorEditor : IGeneratorEditor<RoomCorridorLayoutGeneratorSettings>
+    public class RoomCorridorLayoutGeneratorEditor : BaseLayoutGeneratorEditor<RoomCorridorLayoutGeneratorSettings>
     {
-        public bool DrawInspector(RoomCorridorLayoutGeneratorSettings settings)
+        public override bool DrawInspector(RoomCorridorLayoutGeneratorSettings settings)
         {
             EditorGUI.BeginChangeCheck();
 
+            DrawBaseFields(settings);
+
             EditorGUILayout.Space();
 
-            settings.seed = EditorGUILayout.IntField("Seed", settings.seed);
             settings.maxRooms = EditorGUILayout.IntSlider("Max Rooms", settings.maxRooms, 1, 40);
             settings.minRoomSize = EditorGUILayout.IntSlider("Min Room Size", settings.minRoomSize, 1, 10);
 

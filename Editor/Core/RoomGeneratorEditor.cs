@@ -7,7 +7,6 @@ using UnityEditor;
 using UnityEngine;
 using System.Collections.Generic;
 
-
 #if USE_FBX_EXPORTER
 using UnityEditor.Formats.Fbx.Exporter;
 #endif
@@ -37,7 +36,6 @@ namespace EZRoomGen.Core.Editor
         private SerializedProperty lampPrefabProp;
         private SerializedProperty roomSpacingProp;
         private SerializedProperty corridorSpacingProp;
-        // private SerializedProperty generateOnStartProp;
         private SerializedProperty addCollidersProp;
         private SerializedProperty invertRoofProp;
         private SerializedProperty generatorTypeProp;
@@ -67,45 +65,54 @@ namespace EZRoomGen.Core.Editor
             lampPrefabProp = serializedObject.FindProperty("lampPrefab");
             roomSpacingProp = serializedObject.FindProperty("roomSpacing");
             corridorSpacingProp = serializedObject.FindProperty("corridorSpacing");
-            // generateOnStartProp = serializedObject.FindProperty("generateOnStart");
             addCollidersProp = serializedObject.FindProperty("addColliders");
             invertRoofProp = serializedObject.FindProperty("invertRoof");
             generatorTypeProp = serializedObject.FindProperty("generatorType");
             generateLayoutAfterResizeProp = serializedObject.FindProperty("generateLayoutAfterResize");
+
+            generator = (RoomGenerator)target;
+            if (generator == null) return;
+
+            layoutGenerator = new DungeonLayoutGenerator(generator.DungeonGeneratorSettings);
+            GenerateRoomFromLayout();
         }
 
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
 
-            generator = (RoomGenerator)target;
-            if (generator == null) return;
-
             scrollPos = EditorGUILayout.BeginScrollView(scrollPos);
 
             ShowHeader();
-            DrawGridSettings();
-            bool paramsChanged = DrawParameters();
+            EditorGUILayout.Space();
+
+            HandleGridSettings();
+
+            bool generalSettingsChanged = DrawParameters();
+            EditorGUILayout.Space();
+
             bool materialsChanged = DrawMaterials();
+            EditorGUILayout.Space();
+
             bool lightingParamsChanged = DrawLightPlacement();
-
             EditorGUILayout.Space();
+
             DrawLayoutGeneratorMenu();
-
             EditorGUILayout.Space();
+
             HandleGrid();
-
             EditorGUILayout.Space();
+
             DrawBottomMenu();
 
             EditorGUILayout.EndScrollView();
 
             serializedObject.ApplyModifiedProperties();
 
-            if (realtimeGenerationProp.boolValue && (paramsChanged || materialsChanged || lightingParamsChanged))
+            if (realtimeGenerationProp.boolValue && (generalSettingsChanged || materialsChanged || lightingParamsChanged))
             {
-                // generator.GenerateRoom();
-                GenerateRoomFromLayout();
+                generator.GenerateRoom();
+                // GenerateRoomFromLayout();
             }
         }
 
@@ -130,11 +137,36 @@ namespace EZRoomGen.Core.Editor
 
         private void ShowHeader()
         {
+            EditorGUILayout.BeginHorizontal();
+
             EditorGUILayout.LabelField("EZ Room Generator", EditorStyles.boldLabel);
             EditorGUILayout.Space();
+
+            GUILayout.FlexibleSpace();
+
+            if (GUILayout.Button("Find Player prefab", GUILayout.Width(150)))
+            {
+                string[] guids = AssetDatabase.FindAssets("EZRoomGenerator_Player t:Prefab");
+                if (guids.Length > 0)
+                {
+                    string path = AssetDatabase.GUIDToAssetPath(guids[0]);
+                    var prefab = AssetDatabase.LoadAssetAtPath<Object>(path);
+                    if (prefab)
+                    {
+                        EditorGUIUtility.PingObject(prefab);
+                        Selection.activeObject = prefab;
+                    }
+                }
+                else
+                {
+                    EditorUtility.DisplayDialog("Not found", "Player.prefab was not found in the project.", "OK");
+                }
+            }
+
+            EditorGUILayout.EndHorizontal();
         }
 
-        private void DrawGridSettings()
+        private void HandleGridSettings()
         {
             EditorGUILayout.LabelField("Grid Settings", EditorStyles.boldLabel);
 
@@ -168,20 +200,18 @@ namespace EZRoomGen.Core.Editor
         /// </summary>
         private bool DrawParameters()
         {
-            EditorGUILayout.LabelField("Room/Mesh Generation", EditorStyles.boldLabel);
-
             EditorGUI.BeginChangeCheck();
-            EditorGUILayout.Slider(defaultHeightProp, 1f, 10f, new GUIContent("Default Height"));
-            EditorGUILayout.IntSlider(meshResolutionProp, 1, 12, new GUIContent("Mesh Resolution"));
-            EditorGUILayout.Slider(uvScaleProp, 1f, 10f, new GUIContent("UV Scale"));
+
+            // EditorGUILayout.IntSlider(meshResolutionProp, 1, 3, new GUIContent("Mesh Resolution"));
+            // EditorGUILayout.Slider(uvScaleProp, 1f, 10f, new GUIContent("UV Scale"));
             EditorGUILayout.PropertyField(cellWindingProp);
             EditorGUILayout.PropertyField(realtimeGenerationProp);
             EditorGUILayout.PropertyField(generateLayoutAfterResizeProp);
             EditorGUILayout.PropertyField(addCollidersProp);
             EditorGUILayout.PropertyField(invertRoofProp);
+
             bool changed = EditorGUI.EndChangeCheck();
 
-            EditorGUILayout.Space();
             return changed;
         }
 
@@ -190,15 +220,14 @@ namespace EZRoomGen.Core.Editor
         /// </summary>
         private bool DrawMaterials()
         {
-            // EditorGUILayout.LabelField("Materials", EditorStyles.boldLabel);
-
             EditorGUI.BeginChangeCheck();
+
             EditorGUILayout.PropertyField(wallMaterialProp);
             EditorGUILayout.PropertyField(floorMaterialProp);
             EditorGUILayout.PropertyField(roofMaterialProp);
+
             bool changed = EditorGUI.EndChangeCheck();
 
-            EditorGUILayout.Space();
             return changed;
         }
 
@@ -207,16 +236,19 @@ namespace EZRoomGen.Core.Editor
         /// </summary>
         private bool DrawLightPlacement()
         {
-            // EditorGUILayout.LabelField("Light Placement", EditorStyles.boldLabel);
-
             EditorGUI.BeginChangeCheck();
 
             EditorGUILayout.PropertyField(automaticallyAddLightsProp);
-            EditorGUILayout.PropertyField(lampPrefabProp);
-            EditorGUILayout.Slider(roomSpacingProp, 2f, 10f, new GUIContent("Room Spacing"));
-            EditorGUILayout.Slider(corridorSpacingProp, 2f, 10f, new GUIContent("Corridor Spacing"));
+
+            if (automaticallyAddLightsProp.boolValue)
+            {
+                EditorGUILayout.PropertyField(lampPrefabProp);
+                EditorGUILayout.Slider(roomSpacingProp, 2f, 20f, new GUIContent("Room Spacing"));
+                EditorGUILayout.Slider(corridorSpacingProp, 2f, 20f, new GUIContent("Corridor Spacing"));
+            }
 
             bool changed = EditorGUI.EndChangeCheck();
+
             return changed;
         }
 
@@ -291,19 +323,19 @@ namespace EZRoomGen.Core.Editor
             if (type == LayoutGeneratorType.RoomCorridor)
             {
                 shouldGenerate = roomCorridorGeneratorEditor.DrawInspector(generator.RoomCorridorGeneratorSettings);
-                generator.RoomCorridorGeneratorSettings.height = defaultHeightProp.floatValue;
+                if (shouldGenerate) generator.DefaultHeight = generator.RoomCorridorGeneratorSettings.height;
                 layoutGenerator = new RoomCorridorLayoutGenerator(generator.RoomCorridorGeneratorSettings);
             }
             else if (type == LayoutGeneratorType.Dungeon)
             {
                 shouldGenerate = dungeonLayoutGeneratorEditor.DrawInspector(generator.DungeonGeneratorSettings);
-                generator.DungeonGeneratorSettings.height = defaultHeightProp.floatValue;
+                if (shouldGenerate) generator.DefaultHeight = generator.DungeonGeneratorSettings.height;
                 layoutGenerator = new DungeonLayoutGenerator(generator.DungeonGeneratorSettings);
             }
             else if (type == LayoutGeneratorType.Maze)
             {
                 shouldGenerate = mazeLayoutGeneratorEditor.DrawInspector(generator.MazeGeneratorSettings);
-                generator.MazeGeneratorSettings.height = defaultHeightProp.floatValue;
+                if (shouldGenerate) generator.DefaultHeight = generator.DungeonGeneratorSettings.height;
                 layoutGenerator = new MazeLayoutGenerator(generator.MazeGeneratorSettings);
             }
 
@@ -340,7 +372,7 @@ namespace EZRoomGen.Core.Editor
         {
             if (generator.RoomObject == null)
             {
-                Debug.LogWarning("EZ Room Gen: No generated room to export.");
+                Debug.LogWarning($"{Constants.ProjectDebugName}: No generated room to export.");
                 return;
             }
 
@@ -354,7 +386,7 @@ namespace EZRoomGen.Core.Editor
                 GameObject tempContainer = new GameObject("TempExport");
 
                 // Store original materials for later reassignment
-                System.Collections.Generic.Dictionary<string, Material> originalMaterials = new System.Collections.Generic.Dictionary<string, Material>();
+                Dictionary<string, Material> originalMaterials = new Dictionary<string, Material>();
 
                 // Find and copy only Wall, Floor, and Roof objects
                 Transform[] children = generator.RoomObject.GetComponentsInChildren<Transform>(true);
@@ -433,16 +465,16 @@ namespace EZRoomGen.Core.Editor
                         AssetDatabase.SaveAssets();
                     }
 
-                    Debug.Log($"EZ Room Gen: ✅ Room meshes (Wall, Floor, Roof) successfully exported to: {relativePath}");
+                    Debug.Log($"{Constants.ProjectDebugName}: ✅ Room meshes (Wall, Floor, Roof) successfully exported to: {relativePath}");
                 }
                 else
                 {
-                    Debug.Log($"EZ Room Gen: ✅ Room meshes (Wall, Floor, Roof) successfully exported to: {path}");
+                    Debug.Log($"{Constants.ProjectDebugName}: ✅ Room meshes (Wall, Floor, Roof) successfully exported to: {path}");
                 }
             }
             catch (System.Exception ex)
             {
-                Debug.LogError($"EZ Room Gen: ❌ FBX Export failed: {ex.Message}");
+                Debug.LogError($"{Constants.ProjectDebugName}: ❌ FBX Export failed: {ex.Message}");
             }
         }
 
@@ -455,7 +487,7 @@ namespace EZRoomGen.Core.Editor
         {
             if (generator.RoomObject == null)
             {
-                Debug.LogWarning("EZ Room Gen: No generated room to export.");
+                Debug.LogWarning("{Constants.ProjectDebugName}: No generated room to export.");
                 return;
             }
 
@@ -472,7 +504,7 @@ namespace EZRoomGen.Core.Editor
                 }
                 else
                 {
-                    Debug.LogError("EZ Room Gen: FBX must be saved inside the Assets folder for prefab creation.");
+                    Debug.LogError("{Constants.ProjectDebugName}: FBX must be saved inside the Assets folder for prefab creation.");
                     return;
                 }
 
@@ -575,17 +607,17 @@ namespace EZRoomGen.Core.Editor
                 if (savedPrefab != null)
                 {
                     AssetDatabase.Refresh();
-                    Debug.Log($"EZ Room Gen: ✅ Complete room prefab created at: {prefabPath}");
+                    Debug.Log($"{Constants.ProjectDebugName}: ✅ Complete room prefab created at: {prefabPath}");
                     EditorGUIUtility.PingObject(savedPrefab);
                 }
                 else
                 {
-                    Debug.LogError("EZ Room Gen: ❌ Failed to create prefab.");
+                    Debug.LogError("{Constants.ProjectDebugName}: ❌ Failed to create prefab.");
                 }
             }
             catch (System.Exception ex)
             {
-                Debug.LogError($"EZ Room Gen: ❌ Prefab creation failed: {ex.Message}\n{ex.StackTrace}");
+                Debug.LogError($"{Constants.ProjectDebugName}: ❌ Prefab creation failed: {ex.Message}\n{ex.StackTrace}");
             }
         }
 #endif

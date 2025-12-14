@@ -10,6 +10,7 @@ namespace EZRoomGen.Generation
     {
         public int loopCount = 5;
         public float deadEndKeepChance = 0.3f;
+        public float pathWidth = 2;
         public bool smoothEdges = false;
 
     }

@@ -8,17 +8,15 @@ namespace EZRoomGen.Generation.Editor
     /// <summary>
     /// Editor utility class used to display Dungeon Layout Generator settings.
     /// </summary>
-    public class DungeonLayoutGeneratorEditor : IGeneratorEditor<DungeonLayoutGeneratorSettings>
+    public class DungeonLayoutGeneratorEditor : BaseLayoutGeneratorEditor<DungeonLayoutGeneratorSettings>
     {
-        public bool DrawInspector(DungeonLayoutGeneratorSettings settings)
+        public override bool DrawInspector(DungeonLayoutGeneratorSettings settings)
         {
             EditorGUI.BeginChangeCheck();
 
-            EditorGUILayout.Space();
+            DrawBaseFields(settings);
 
-            settings.seed = EditorGUILayout.IntField(
-                new GUIContent("Seed", "Random seed"),
-                settings.seed);
+            EditorGUILayout.Space();
 
             settings.density = EditorGUILayout.Slider(
                 new GUIContent("Density", "Initial wall density (0-1)"),

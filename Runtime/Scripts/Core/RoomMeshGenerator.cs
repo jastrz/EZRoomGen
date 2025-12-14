@@ -165,13 +165,13 @@ namespace EZRoomGen.Core
 
             Material defaultMaterial = GetDefaultMaterial();
 
-            MeshUtils.CreateMeshObject("Floor", floorVerts, floorTris, floorUVs,
+            MeshUtils.CreateMeshObject(Constants.FloorMeshName, floorVerts, floorTris, floorUVs,
                 floorMaterial != null ? floorMaterial : defaultMaterial, roomObject);
 
-            MeshUtils.CreateMeshObject("Walls", wallVerts, wallTris, wallUVs,
+            MeshUtils.CreateMeshObject(Constants.WallsMeshName, wallVerts, wallTris, wallUVs,
                 wallMaterial != null ? wallMaterial : defaultMaterial, roomObject);
 
-            MeshUtils.CreateMeshObject("Roof", roofVerts, roofTris, roofUVs,
+            MeshUtils.CreateMeshObject(Constants.RoofMeshName, roofVerts, roofTris, roofUVs,
                 roofMaterial != null ? roofMaterial : defaultMaterial, roomObject);
 
             return roomObject;

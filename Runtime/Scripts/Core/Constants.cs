@@ -13,6 +13,9 @@ namespace EZRoomGen.Core
         public const string WallsMeshName = "Walls";
         public const string FloorMeshName = "Floor";
         public const string RoofMeshName = "Roof";
+        public const string ProjectDebugName = "EZ Room Generator";
         public const string DefaultRoomObjectName = "RoomObject";
+        public const string DefaultObjectHolderName = "ObjectHolder";
+        public const string DefaultNonPrefabLightName = "CeilingLight";
     }
 }

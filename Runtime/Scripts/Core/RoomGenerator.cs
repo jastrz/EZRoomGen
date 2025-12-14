@@ -13,15 +13,24 @@ namespace EZRoomGen.Core
     {
         public GameObject RoomObject => roomObject;
 
-        [Header("Grid Settings")]
+#if UNITY_EDITOR
+        // properties exposed for grid editor
+        public int GridWidth => gridWidth;
+        public int GridHeight => gridHeight;
+        public int SelectedX { get => selectedX; set => selectedX = value; }
+        public int SelectedY { get => selectedY; set => selectedY = value; }
+        public float DefaultHeight { get => defaultHeight; set => defaultHeight = value; }
+        public bool RealtimeGeneration => realtimeGeneration;
+#endif
+
         [SerializeField] private int gridWidth = 10;
         [SerializeField] private int gridHeight = 10;
 
-        [Header("Room Parameters")]
-        [SerializeField] private float defaultHeight = 2.5f;
-        [SerializeField] private int meshResolution = 1;
-        [SerializeField] private float uvScale = 1f;
+        [Header("General Settings")]
         [SerializeField] private CellWinding cellWinding = CellWinding.Default;
+        [SerializeField] private float defaultHeight = 2.5f;
+        [SerializeField] private float uvScale = 1f;
+        [SerializeField] private int meshResolution = 1;
         [SerializeField] private bool realtimeGeneration = true;
         [SerializeField] private bool invertRoof = false;
 
@@ -57,9 +66,8 @@ namespace EZRoomGen.Core
 
         #endregion
 
-        // Editor-only fields
-        private int selectedX = -1;
-        private int selectedY = -1;
+        [SerializeField] private int selectedX = -1;
+        [SerializeField] private int selectedY = -1;
         [SerializeField] private bool generateLayoutAfterResize = false;
 
         private void Awake()
@@ -192,6 +200,7 @@ namespace EZRoomGen.Core
                 roomObject.transform.SetParent(transform);
                 roomObject.transform.localPosition = Vector3.zero;
                 roomObject.transform.localRotation = Quaternion.identity;
+                roomObject.transform.localScale = Vector3.one;
 
                 if (addColliders)
                 {
@@ -401,7 +410,7 @@ namespace EZRoomGen.Core
         {
             foreach (Transform child in room.GetComponentsInChildren<Transform>(true))
             {
-                if (child.name == "Floor" || child.name == "Walls")
+                if (child.name == Constants.FloorMeshName || child.name == Constants.RoofMeshName || child.name == Constants.WallsMeshName)
                 {
                     MeshCollider collider = child.gameObject.GetComponent<MeshCollider>();
                     if (collider == null)
@@ -421,14 +430,14 @@ namespace EZRoomGen.Core
             {
                 wallMaterial = Resources.Load<Material>("EZRoomGen/Materials/wall_material");
                 if (wallMaterial == null)
-                    Debug.LogWarning("EZ Room Gen: Default wall material not found in Resources/EZRoomGen/Materials/");
+                    Debug.LogWarning($"{Constants.ProjectDebugName}: Default wall material not found in Resources/EZRoomGen/Materials/");
             }
 
             if (floorMaterial == null)
             {
                 floorMaterial = Resources.Load<Material>("EZRoomGen/Materials/floor_material");
                 if (floorMaterial == null)
-                    Debug.LogWarning("EZ Room Gen: Default floor material not found in Resources/EZRoomGen/Materials/");
+                    Debug.LogWarning($"{Constants.ProjectDebugName}: Default floor material not found in Resources/EZRoomGen/Materials/");
             }
 
             if (roofMaterial == null)
@@ -445,7 +454,7 @@ namespace EZRoomGen.Core
             {
                 lampPrefab = Resources.Load<GameObject>("EZRoomGen/Prefabs/lamp");
                 if (lampPrefab == null)
-                    Debug.LogWarning("EZ Room Gen: Default lamp prefab not found in Resources/EZRoomGen/Prefabs/");
+                    Debug.LogWarning($"{Constants.ProjectDebugName}: Default lamp prefab not found in Resources/EZRoomGen/Prefabs/");
             }
         }
 

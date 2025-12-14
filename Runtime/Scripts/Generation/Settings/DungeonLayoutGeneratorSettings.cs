@@ -4,7 +4,7 @@ using UnityEngine;
 namespace EZRoomGen.Generation
 {
     /// <summary>
-    /// Settings used for dungeon / maze generation.
+    /// Settings used for dungeon generation.
     /// </summary>
     [Serializable]
     public class DungeonLayoutGeneratorSettings : LayoutGeneratorSettings

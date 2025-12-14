@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 3614012711865733658}
   - component: {fileID: 5205689953224628840}
   m_Layer: 0
-  m_Name: Player
+  m_Name: EZRoomGenerator_Player
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

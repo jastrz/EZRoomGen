@@ -6,6 +6,6 @@ namespace EZRoomGen.Generation
     public abstract class LayoutGeneratorSettings
     {
         public int seed = 0;
-        public float height = 1f;
+        public float height = 2.5f;
     }
 }
