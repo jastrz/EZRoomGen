@@ -11,7 +11,7 @@ namespace EZRoomGen.Generation
     {
         [Tooltip("Density of the maze (0-1). Higher = more walls")]
         [Range(0f, 1f)]
-        public float density = 0.4f;
+        public float density = 0.46f;
 
         [Tooltip("Number of iterations for maze generation")]
         [Range(1, 10)]

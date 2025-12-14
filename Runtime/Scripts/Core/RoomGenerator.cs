@@ -23,8 +23,8 @@ namespace EZRoomGen.Core
         public bool RealtimeGeneration => realtimeGeneration;
 #endif
 
-        [SerializeField] private int gridWidth = 10;
-        [SerializeField] private int gridHeight = 10;
+        [SerializeField] private int gridWidth = 40;
+        [SerializeField] private int gridHeight = 40;
 
         [Header("General Settings")]
         [SerializeField] private CellWinding cellWinding = CellWinding.Default;
@@ -42,8 +42,8 @@ namespace EZRoomGen.Core
         [Header("Lighting")]
         [SerializeField] private bool automaticallyAddLights = true;
         [SerializeField] private GameObject lampPrefab;
-        [SerializeField] private float roomSpacing = 4f;
-        [SerializeField] private float corridorSpacing = 6f;
+        [SerializeField] private float roomSpacing = 8f;
+        [SerializeField] private float corridorSpacing = 8f;
 
         [Header("Generation")]
         [SerializeField] private bool generateOnStart = false;
@@ -51,7 +51,6 @@ namespace EZRoomGen.Core
 
         [SerializeField][HideInInspector] private GridData gridData;
         [SerializeField][HideInInspector] private GameObject roomObject;
-        [SerializeField] private LayoutGeneratorType generatorType;
         [SerializeField] private LightsPlacer lightsPlacer;
         private RoomMeshGenerator roomMeshGenerator;
 
@@ -68,7 +67,11 @@ namespace EZRoomGen.Core
 
         [SerializeField] private int selectedX = -1;
         [SerializeField] private int selectedY = -1;
+        
+#pragma warning disable 0414
+        [SerializeField] private LayoutGeneratorType generatorType = LayoutGeneratorType.Dungeon;
         [SerializeField] private bool generateLayoutAfterResize = false;
+#pragma warning restore 0414
 
         private void Awake()
         {

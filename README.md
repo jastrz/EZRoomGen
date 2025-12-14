@@ -47,13 +47,13 @@ Option 1: Package Manager (Recommended)
 1. Open Unity and navigate to Window > Package Manager
 2. Click the + button in the top-left corner
 3. Select Add package from git URL...
-4. Paste the following URL: `https://github.com/jastrz/EZRoomGen.git` and install.
+4. Paste the following URL: `https://github.com/jastrz/EZRoomGenerator.git` and install.
 
 Option 2: Manual Download
 
-1. Clone or download and paste the repository into your Unity project's `Assets` folder.
+1. Clone the repository into your Unity project's `Assets` folder.
 
-Add the `RoomGenerator` component to a GameObject in your scene.
+Finally, add the `RoomGenerator` component to a GameObject in your scene.
 
 ## FBX Export
 
