@@ -389,9 +389,9 @@ namespace EZRoomGen.Core.Editor
             {
                 serializedObject.Update();
                 layoutGenerator = new DungeonLayoutGenerator(generator.DungeonGeneratorSettings);
-                GenerateRoomFromLayout();
                 generatedInitialRoomProp.boolValue = true;
                 serializedObject.ApplyModifiedProperties();
+                GenerateRoomFromLayout();
             }
         }
 
