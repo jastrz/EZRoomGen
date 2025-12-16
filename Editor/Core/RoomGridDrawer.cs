@@ -283,7 +283,11 @@ namespace EZRoomGen.Core.Editor
                     selectedCells.Clear();
                 }
 
-                if (!selectedCells.Contains((x, y)))
+                if (selectedCells.Contains((x, y)))
+                {
+                    selectedCells.Remove((x, y));
+                }
+                else
                 {
                     selectedCells.Add((x, y));
                 }
